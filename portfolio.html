@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>周群 · 动态视觉设计作品集</title>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --surface2: #1a1a26;
+      --accent: #c8a96e;
+      --accent2: #7ec8c8;
+      --text: #e8e4dc;
+      --muted: #888;
+      --border: rgba(200,169,110,0.15);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      line-height: 1.6;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 60px 20px;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 30%, rgba(200,169,110,0.08) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 40% at 20% 80%, rgba(126,200,200,0.06) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .hero-tag {
+      font-size: 11px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1px solid var(--border);
+      padding: 5px 16px;
+      border-radius: 20px;
+      margin-bottom: 28px;
+      display: inline-block;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.4rem, 6vw, 5rem);
+      font-weight: 300;
+      letter-spacing: 0.05em;
+      line-height: 1.1;
+      margin-bottom: 16px;
+    }
+
+    .hero h1 em {
+      font-style: normal;
+      color: var(--accent);
+    }
+
+    .hero-sub {
+      font-size: clamp(0.9rem, 2vw, 1.1rem);
+      color: var(--muted);
+      max-width: 560px;
+      margin: 0 auto 48px;
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 48px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-num {
+      font-size: 2rem;
+      font-weight: 300;
+      color: var(--accent);
+      display: block;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* ── HIGHLIGHT BADGE ── */
+    .highlight-bar {
+      background: linear-gradient(90deg, rgba(200,169,110,0.12), rgba(126,200,200,0.08));
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 40px;
+      text-align: center;
+    }
+
+    .highlight-bar p {
+      font-size: 0.95rem;
+      color: var(--text);
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .highlight-bar strong {
+      color: var(--accent);
+    }
+
+    /* ── SECTION TITLES ── */
+    section {
+      padding: 80px 40px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .section-header {
+      margin-bottom: 48px;
+    }
+
+    .section-label {
+      font-size: 10px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--accent2);
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .section-header h2 {
+      font-size: clamp(1.6rem, 3vw, 2.4rem);
+      font-weight: 300;
+      color: var(--text);
+    }
+
+    .section-header h2 em {
+      font-style: normal;
+      color: var(--accent);
+    }
+
+    /* ── WORKS GRID ── */
+    .works-grid {
+      columns: 3;
+      column-gap: 16px;
+    }
+
+    @media (max-width: 900px) { .works-grid { columns: 2; } }
+    @media (max-width: 560px) { .works-grid { columns: 1; } }
+
+    .work-item {
+      break-inside: avoid;
+      margin-bottom: 16px;
+      position: relative;
+      cursor: pointer;
+      border-radius: 6px;
+      overflow: hidden;
+      background: var(--surface);
+      border: 1px solid transparent;
+      transition: border-color 0.3s, transform 0.3s;
+    }
+
+    .work-item:hover {
+      border-color: var(--accent);
+      transform: translateY(-3px);
+    }
+
+    .work-item img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .work-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(transparent, rgba(0,0,0,0.85));
+      padding: 24px 14px 14px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .work-item:hover .work-overlay {
+      opacity: 1;
+    }
+
+    .work-year {
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--accent);
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    .work-title {
+      font-size: 0.85rem;
+      color: #fff;
+      font-weight: 500;
+    }
+
+    /* ── VIDEO SECTION ── */
+    .video-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 20px;
+    }
+
+    .video-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 24px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      transition: border-color 0.3s, background 0.3s;
+    }
+
+    .video-card:hover {
+      border-color: var(--accent);
+      background: var(--surface2);
+    }
+
+    .video-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(200,169,110,0.12);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: var(--accent);
+      font-size: 1.1rem;
+    }
+
+    .video-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .video-year {
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--accent2);
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .video-title {
+      font-size: 0.95rem;
+      color: var(--text);
+      font-weight: 500;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .video-desc {
+      font-size: 0.78rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .video-arrow {
+      color: var(--accent);
+      font-size: 1rem;
+      flex-shrink: 0;
+      align-self: center;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .video-card:hover .video-arrow { opacity: 1; }
+
+    /* ── ABOUT ── */
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: start;
+    }
+
+    @media (max-width: 700px) { .about-grid { grid-template-columns: 1fr; gap: 40px; } }
+
+    .about-text p {
+      color: #aaa;
+      font-size: 0.95rem;
+      margin-bottom: 16px;
+    }
+
+    .about-text p strong {
+      color: var(--accent);
+    }
+
+    .skills-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 24px;
+    }
+
+    .skill-tag {
+      background: rgba(200,169,110,0.08);
+      border: 1px solid var(--border);
+      color: var(--accent);
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      letter-spacing: 0.5px;
+    }
+
+    .timeline {
+      list-style: none;
+    }
+
+    .timeline li {
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 20px;
+    }
+
+    .timeline li:last-child {
+      border-bottom: none;
+    }
+
+    .tl-year {
+      font-size: 0.85rem;
+      color: var(--accent);
+      min-width: 100px;
+      font-weight: 300;
+    }
+
+    .tl-content {
+      font-size: 0.9rem;
+      color: #aaa;
+    }
+
+    .tl-content strong {
+      color: var(--text);
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    /* ── CONTACT FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 60px 40px;
+      text-align: center;
+    }
+
+    footer p {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-bottom: 8px;
+    }
+
+    footer .contact-note {
+      font-size: 1.1rem;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    /* ── LIGHTBOX ── */
+    #lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.92);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    #lightbox.open { display: flex; }
+
+    #lightbox img {
+      max-width: 90vw;
+      max-height: 90vh;
+      object-fit: contain;
+      border-radius: 4px;
+    }
+
+    #lightbox-close {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      font-size: 2rem;
+      color: #aaa;
+      cursor: pointer;
+      background: none;
+      border: none;
+      line-height: 1;
+    }
+
+    #lightbox-close:hover { color: #fff; }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- HERO -->
+<header class="hero">
+  <span class="hero-tag">Motion · Visual · Design</span>
+  <h1>周群<br><em>动态视觉设计</em></h1>
+  <p class="hero-sub">从凤凰卫视到张艺谋新片，二十余年专注于动态视觉与后期制作。</p>
+  <div class="hero-stats">
+    <div class="stat">
+      <span class="stat-num">28+</span>
+      <span class="stat-label">年从业经验</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num">14</span>
+      <span class="stat-label">年凤凰卫视</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num">30+</span>
+      <span class="stat-label">品牌合作</span>
+    </div>
+  </div>
+</header>
+
+<!-- HIGHLIGHT BAR -->
+<div class="highlight-bar">
+  <p>
+    最新项目：<strong>张艺谋新片《惊蛰无声》HUD动态视觉制作</strong>（2026）·
+    客户覆盖：奔驰 · 国窖1573 · 抖音电商 · 央视 · 北京卫视 · 金山办公 · 腾讯体育
+  </p>
+</div>
+
+<!-- WORKS -->
+<section>
+  <div class="section-header">
+    <span class="section-label">Selected Works</span>
+    <h2>作品<em>精选</em></h2>
+  </div>
+
+  <div class="works-grid">
+
+    <!-- 2026 惊蛰无声 -->
+    <div class="work-item" onclick="openLightbox('https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/1goc/1205X1846/2026-02-27%E6%83%8A%E8%9B%B0%E6%97%A0%E5%A3%B0_09-31-59.jpg')">
+      <img src="https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/1goc/1205X1846/2026-02-27%E6%83%8A%E8%9B%B0%E6%97%A0%E5%A3%B0_09-31-59.jpg" alt="惊蛰无声 HUD" loading="lazy" />
+      <div class="work-overlay">
+        <span class="work-year">2026</span>
+        <span class="work-title">张艺谋《惊蛰无声》— HUD动态视觉</span>
+      </div>
+    </div>
+
+    <!-- 2023 技能人生 -->
+    <div class="work-item" onclick="openLightbox('https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/pM4w/4017X7876/2023.02%E6%8A%80%E8%83%BD%E4%BA%BA%E7%94%9F.jpg')">
+      <img src="https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/pM4w/4017X7876/2023.02%E6%8A%80%E8%83%BD%E4%BA%BA%E7%94%9F.jpg" alt="2023 技能人生" loading="lazy" />
+      <div class="work-overlay">
+        <span class="work-year">2023</span>
+        <span class="work-title">技能人生</span>
+      </div>
+    </div>
+
+    <!-- 2022 璞裙 -->
+    <div class="work-item" onclick="openLightbox('https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/REuo/2001X7853/20220309.%E7%92%9E%E8%A3%99.jpg')">
+      <img src="https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/REuo/2001X7853/20220309.%E7%92%9E%E8%A3%99.jpg" alt="2022 璞裙" loading="lazy" />
+      <div class="work-overlay">
+        <span class="work-year">2022</span>
+        <span class="work-title">璞裙 · 国家艺术基金 · 浙江音乐学院</span>
+      </div>
+    </div>
+
+    <!-- 2022.05b -->
+    <div class="work-item" onclick="openLightbox('https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/kLmo/1823X2479/2022.05b.jpeg')">
+      <img src="https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/kLmo/1823X2479/2022.05b.jpeg" alt="2022作品" loading="lazy" />
+      <div class="work-overlay">
+        <span class="work-year">2022</span>
+        <span class="work-title">动态视觉设计</span>
+      </div>
+    </div>
+
+    <!-- 2022.05a -->
+    <div class="work-item" onclick="openLightbox('https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/AjeF/1889X2209/2022.05a.jpeg')">
+      <img src="https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/AjeF/1889X2209/2022.05a.jpeg" alt="2022作品A" loading="lazy" />
+      <div class="work-overlay">
+        <span class="work-year">2022</span>
+        <span class="work-title">品牌动态视觉</span>
+      </div>
+    </div>
+
+    <!-- 2022.01 高碑店 -->
+    <div class="work-item" onclick="openLightbox('https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/5pDJ/2001X3163/2022.01%E9%AB%98%E7%A2%91%E5%BA%97.png')">
+      <img src="https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/5pDJ/2001X3163/2022.01%E9%AB%98%E7%A2%91%E5%BA%97.png" alt="2022 高碑店" loading="lazy" />
+      <div class="work-overlay">
+        <span class="work-year">2022</span>
+        <span class="work-title">高碑店</span>
+      </div>
+    </div>
+
+    <!-- 2021.12 -->
+    <div class="work-item" onclick="openLightbox('https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/Vynp/640X1894/2021.12.jpeg')">
+      <img src="https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/Vynp/640X1894/2021.12.jpeg" alt="2021.12作品" loading="lazy" />
+      <div class="work-overlay">
+        <span class="work-year">2021</span>
+        <span class="work-title">腾讯体育 · 法甲"一周说法"</span>
+      </div>
+    </div>
+
+    <!-- 2020 奥布替尼 -->
+    <div class="work-item" onclick="openLightbox('https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/rNRy/1018X684/2020%E5%A5%A5%E5%B8%83%E6%9B%BF%E5%B0%BC%E5%AE%A3%E4%BC%A0%E7%89%87cut.mp4.jpg')">
+      <img src="https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/rNRy/1018X684/2020%E5%A5%A5%E5%B8%83%E6%9B%BF%E5%B0%BC%E5%AE%A3%E4%BC%A0%E7%89%87cut.mp4.jpg" alt="2020 奥布替尼" loading="lazy" />
+      <div class="work-overlay">
+        <span class="work-year">2020</span>
+        <span class="work-title">奥布替尼 · 品牌宣传片</span>
+      </div>
+    </div>
+
+    <!-- 2020.873600 -->
+    <div class="work-item" onclick="openLightbox('https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/lmOt/931X2614/2020.873600.jpeg')">
+      <img src="https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/lmOt/931X2614/2020.873600.jpeg" alt="2020作品" loading="lazy" />
+      <div class="work-overlay">
+        <span class="work-year">2020</span>
+        <span class="work-title">动态视觉设计</span>
+      </div>
+    </div>
+
+    <!-- 2020 只有河南 A04 -->
+    <div class="work-item" onclick="openLightbox('https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/39Cb/2000X1283/2020.11%E5%8F%AA%E6%9C%89%E6%B2%B3%E5%8D%97A04.png')">
+      <img src="https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/39Cb/2000X1283/2020.11%E5%8F%AA%E6%9C%89%E6%B2%B3%E5%8D%97A04.png" alt="只有河南" loading="lazy" />
+      <div class="work-overlay">
+        <span class="work-year">2020</span>
+        <span class="work-title">只有河南 · 文旅项目</span>
+      </div>
+    </div>
+
+    <!-- 2020 只有河南 A01 -->
+    <div class="work-item" onclick="openLightbox('https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/QxC5/2000X1035/2020.11%E5%8F%AA%E6%9C%89%E6%B2%B3%E5%8D%97A01.jpg')">
+      <img src="https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/QxC5/2000X1035/2020.11%E5%8F%AA%E6%9C%89%E6%B2%B3%E5%8D%97A01.jpg" alt="只有河南A01" loading="lazy" />
+      <div class="work-overlay">
+        <span class="work-year">2020</span>
+        <span class="work-title">只有河南 · 视觉呈现</span>
+      </div>
+    </div>
+
+    <!-- 2019 国窖1573 -->
+    <div class="work-item" onclick="openLightbox('https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/ctaT/960X544/2019%E5%9B%BD%E7%AA%961573%E5%B9%BF%E5%91%8A%E7%89%87.mp4_20210315_202027.075.jpg')">
+      <img src="https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/ctaT/960X544/2019%E5%9B%BD%E7%AA%961573%E5%B9%BF%E5%91%8A%E7%89%87.mp4_20210315_202027.075.jpg" alt="2019 国窖1573" loading="lazy" />
+      <div class="work-overlay">
+        <span class="work-year">2019</span>
+        <span class="work-title">国窖1573 · 品牌广告片</span>
+      </div>
+    </div>
+
+    <!-- 2018 湘约韩国 -->
+    <div class="work-item" onclick="openLightbox('https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/Xcd0/3837X3013/2018%E6%B9%98%E7%BA%A6%E9%9F%A9%E5%9B%BD%E5%AE%A3%E4%BC%A0%E7%89%8706061.jpg')">
+      <img src="https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/Xcd0/3837X3013/2018%E6%B9%98%E7%BA%A6%E9%9F%A9%E5%9B%BD%E5%AE%A3%E4%BC%A0%E7%89%8706061.jpg" alt="2018 湘约韩国" loading="lazy" />
+      <div class="work-overlay">
+        <span class="work-year">2018</span>
+        <span class="work-title">湘约韩国 · 宣传片</span>
+      </div>
+    </div>
+
+    <!-- 2006 墨沙东 -->
+    <div class="work-item" onclick="openLightbox('https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/nybl/4401X9534/2006_%E9%BB%98%E6%B2%99%E4%B8%9C1.jpg')">
+      <img src="https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/nybl/4401X9534/2006_%E9%BB%98%E6%B2%99%E4%B8%9C1.jpg" alt="2006 墨沙东" loading="lazy" />
+      <div class="work-overlay">
+        <span class="work-year">2006</span>
+        <span class="work-title">凤凰卫视 · 栏目包装</span>
+      </div>
+    </div>
+
+    <!-- 2005-2016 综合 -->
+    <div class="work-item" onclick="openLightbox('https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/ZywA/763X2603/2005.2016.93.jpeg')">
+      <img src="https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/ZywA/763X2603/2005.2016.93.jpeg" alt="2005-2016综合" loading="lazy" />
+      <div class="work-overlay">
+        <span class="work-year">2005–2016</span>
+        <span class="work-title">凤凰卫视 · 多年作品精选</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- VIDEO SECTION -->
+<section style="padding-top: 0;">
+  <div class="section-header">
+    <span class="section-label">Video Works</span>
+    <h2>视频<em>作品</em></h2>
+  </div>
+
+  <div class="video-list">
+
+    <a class="video-card" href="https://mp.weixin.qq.com/s/sZpYU6QGf2ZuJu2oFCQ8Bg" target="_blank" rel="noopener">
+      <div class="video-icon">▶</div>
+      <div class="video-info">
+        <span class="video-year">2023–2025</span>
+        <div class="video-title">蒙太奇系列</div>
+        <div class="video-desc">实验影像 · 个人创作系列</div>
+      </div>
+      <span class="video-arrow">→</span>
+    </a>
+
+    <a class="video-card" href="https://mp.weixin.qq.com/s/7yZHW8lBawTjYCQ1VVHRWw" target="_blank" rel="noopener">
+      <div class="video-icon">▶</div>
+      <div class="video-info">
+        <span class="video-year">2019–2021</span>
+        <div class="video-title">品牌作品集 · 2019–2021</div>
+        <div class="video-desc">国窖1573 · 只有河南 · 奔驰 · 抖音电商 · 天津银行</div>
+      </div>
+      <span class="video-arrow">→</span>
+    </a>
+
+    <a class="video-card" href="https://mp.weixin.qq.com/s/GzkYYToSOBmOxbWgdnqXQQ" target="_blank" rel="noopener">
+      <div class="video-icon">▶</div>
+      <div class="video-info">
+        <span class="video-year">2021–2022</span>
+        <div class="video-title">品牌作品集 · 2021–2022</div>
+        <div class="video-desc">冬奥开场 · 法甲 · BTV 315晚会 · 璞裙</div>
+      </div>
+      <span class="video-arrow">→</span>
+    </a>
+
+    <a class="video-card" href="https://mp.weixin.qq.com/s/wE_kmjxFRt83wUTYcQEDlA" target="_blank" rel="noopener">
+      <div class="video-icon">▶</div>
+      <div class="video-info">
+        <span class="video-year">2020</span>
+        <div class="video-title">作品集 · 文化大观园专辑</div>
+        <div class="video-desc">凤凰卫视 · 文化大观园系列</div>
+      </div>
+      <span class="video-arrow">→</span>
+    </a>
+
+    <a class="video-card" href="https://mp.weixin.qq.com/s/LdKwtiz68JjbHbOD1jAlYg" target="_blank" rel="noopener">
+      <div class="video-icon">▶</div>
+      <div class="video-info">
+        <span class="video-year">2016–2020</span>
+        <div class="video-title">品牌作品集 · 凤凰时代</div>
+        <div class="video-desc">中华医道 · 文化大观园600期 · 朱丹无限</div>
+      </div>
+      <span class="video-arrow">→</span>
+    </a>
+
+    <a class="video-card" href="https://mp.weixin.qq.com/s/NDtfq_qKgr2zCUWzOvri3w" target="_blank" rel="noopener">
+      <div class="video-icon">▶</div>
+      <div class="video-info">
+        <span class="video-year">2005–2016</span>
+        <div class="video-title">早期精选 · E-Box 至凤凰</div>
+        <div class="video-desc">凤凰卫视 · 栏目包装 · 早期作品</div>
+      </div>
+      <span class="video-arrow">→</span>
+    </a>
+
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section>
+  <div class="section-header">
+    <span class="section-label">About</span>
+    <h2>关于<em>周群</em></h2>
+  </div>
+  <div class="about-grid">
+    <div class="about-text">
+      <p>
+        从业<strong>二十八年</strong>，专注于动态视觉设计、后期制作与三维特效。
+        2006–2020年供职于<strong>凤凰卫视</strong>，参与数百期节目包装与栏目视觉体系建设。
+      </p>
+      <p>
+        离开凤凰后持续深耕，客户涵盖<strong>国窖1573、奔驰、抖音、央视、北京卫视、腾讯体育、金山办公</strong>等头部品牌。
+      </p>
+      <p>
+        2026年完成<strong>张艺谋电影《惊蛰无声》</strong>HUD动态视觉制作，是近年国产电影视觉技术探索的代表性参与者。
+      </p>
+      <div class="skills-list">
+        <span class="skill-tag">动态视觉</span>
+        <span class="skill-tag">后期制作</span>
+        <span class="skill-tag">栏目包装</span>
+        <span class="skill-tag">Blender</span>
+        <span class="skill-tag">Houdini</span>
+        <span class="skill-tag">C4D</span>
+        <span class="skill-tag">HUD特效</span>
+        <span class="skill-tag">品牌内容</span>
+        <span class="skill-tag">三维动画</span>
+        <span class="skill-tag">AI视频</span>
+      </div>
+    </div>
+
+    <div>
+      <ul class="timeline">
+        <li>
+          <span class="tl-year">2026</span>
+          <div class="tl-content">
+            <strong>张艺谋《惊蛰无声》</strong>
+            HUD动态视觉制作
+          </div>
+        </li>
+        <li>
+          <span class="tl-year">2020–今</span>
+          <div class="tl-content">
+            <strong>自由职业设计师</strong>
+            奔驰、抖音、国窖1573、央视等多品牌合作
+          </div>
+        </li>
+        <li>
+          <span class="tl-year">2006–2020</span>
+          <div class="tl-content">
+            <strong>凤凰卫视</strong>
+            后期制作 · 动态视觉 · 三维设计（14年）
+          </div>
+        </li>
+        <li>
+          <span class="tl-year">2003</span>
+          <div class="tl-content">
+            <strong>中央电视台春节联欢晚会</strong>
+            参与视觉制作
+          </div>
+        </li>
+        <li>
+          <span class="tl-year">1998–</span>
+          <div class="tl-content">
+            <strong>入行设计</strong>
+            开启动态视觉从业生涯
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>期待新的合作机会 · 欢迎项目洽谈</p>
+  <p class="contact-note">公众号：软组织 &nbsp;|&nbsp; 一群羊</p>
+  <p style="margin-top: 24px; font-size: 0.75rem; opacity: 0.4;">© 2026 周群 · 动态视觉设计</p>
+</footer>
+
+<!-- LIGHTBOX -->
+<div id="lightbox">
+  <button id="lightbox-close" onclick="closeLightbox()">×</button>
+  <img id="lightbox-img" src="" alt="" />
+</div>
+
+<script>
+  function openLightbox(src) {
+    document.getElementById('lightbox-img').src = src;
+    document.getElementById('lightbox').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.getElementById('lightbox').addEventListener('click', function(e) {
+    if (e.target === this) closeLightbox();
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeLightbox();
+  });
+</script>
+
+</body>
+</html>
