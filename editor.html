@@ -1,0 +1,1431 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>作品集编辑器 · 周群</title>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --surface2: #1a1a26;
+      --accent: #c8a96e;
+      --accent2: #7ec8c8;
+      --text: #e8e4dc;
+      --muted: #888;
+      --border: rgba(200,169,110,0.15);
+      --danger: #e05555;
+      --success: #5cb85c;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    header h1 {
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--accent);
+      letter-spacing: 0.05em;
+      flex: 1;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* ── BUTTONS ── */
+    .btn {
+      padding: 7px 16px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .btn:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-primary { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 500; }
+    .btn-primary:hover { background: #d4b87a; }
+    .btn-danger { border-color: var(--danger); color: var(--danger); }
+    .btn-danger:hover { background: rgba(224,85,85,0.12); }
+    .btn-sm { padding: 4px 10px; font-size: 0.75rem; }
+
+    /* ── MAIN LAYOUT ── */
+    .main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── SIDEBAR (编辑表单) ── */
+    .sidebar {
+      width: 320px;
+      min-width: 320px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .sidebar-title {
+      font-size: 0.7rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--accent2);
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .empty-sidebar {
+      color: var(--muted);
+      font-size: 0.85rem;
+      text-align: center;
+      padding: 40px 16px;
+      line-height: 1.8;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .form-group label {
+      font-size: 0.72rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--text);
+      font-size: 0.85rem;
+      padding: 7px 10px;
+      font-family: inherit;
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .form-group textarea { resize: vertical; min-height: 60px; }
+
+    /* 图片预览区 */
+    .img-preview-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .img-preview-item {
+      position: relative;
+      border-radius: 5px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: var(--bg);
+    }
+
+    .img-preview-item img,
+    .img-preview-item video {
+      width: 100%;
+      height: 100px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .img-preview-item video { height: 100px; }
+
+    .img-preview-item .remove-btn {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 22px;
+      height: 22px;
+      background: rgba(0,0,0,0.7);
+      border: none;
+      border-radius: 50%;
+      color: #fff;
+      cursor: pointer;
+      font-size: 0.85rem;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .img-preview-item .remove-btn:hover { background: var(--danger); }
+
+    .img-type-badge {
+      position: absolute;
+      bottom: 4px;
+      left: 4px;
+      font-size: 0.6rem;
+      padding: 2px 6px;
+      border-radius: 3px;
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      letter-spacing: 1px;
+    }
+    .badge-img { background: rgba(200,169,110,0.3); }
+    .badge-video { background: rgba(126,200,200,0.3); }
+    .badge-gif { background: rgba(200,100,200,0.3); }
+
+    /* ── WORKSPACE (卡片列表) ── */
+    .workspace {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .workspace-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .workspace-header h2 {
+      font-size: 0.85rem;
+      font-weight: 400;
+      color: var(--muted);
+    }
+
+    .badge {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--accent);
+    }
+
+    /* ── SECTION TABS ── */
+    .section-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+      background: var(--surface);
+      padding: 4px;
+      border-radius: 8px;
+      width: fit-content;
+    }
+
+    .section-tab {
+      padding: 6px 16px;
+      border-radius: 5px;
+      border: none;
+      background: none;
+      color: var(--muted);
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .section-tab.active {
+      background: var(--accent);
+      color: #000;
+      font-weight: 500;
+    }
+    .section-tab:hover:not(.active) { color: var(--text); }
+
+    /* ── CARD LIST ── */
+    .card-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px;
+    }
+
+    .item-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .item-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .item-card.selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+
+    .item-card-img {
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+      display: block;
+      background: var(--surface2);
+    }
+
+    .item-card-video {
+      width: 100%;
+      height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface2);
+      color: var(--accent2);
+      font-size: 2rem;
+    }
+
+    .item-card-body {
+      padding: 10px 12px;
+    }
+
+    .item-card-year {
+      font-size: 0.68rem;
+      letter-spacing: 1px;
+      color: var(--accent);
+      text-transform: uppercase;
+    }
+
+    .item-card-title {
+      font-size: 0.88rem;
+      color: var(--text);
+      margin-top: 3px;
+      font-weight: 500;
+    }
+
+    .item-card-type {
+      font-size: 0.68rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .item-card-actions {
+      display: flex;
+      gap: 4px;
+      padding: 8px 12px;
+      border-top: 1px solid var(--border);
+      justify-content: flex-end;
+    }
+
+    /* ── ADD CARD ── */
+    .add-card {
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      min-height: 200px;
+      color: var(--muted);
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .add-card:hover { border-color: var(--accent); color: var(--accent); }
+    .add-card .icon { font-size: 2rem; }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      z-index: 9999;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+    #toast.show { opacity: 1; }
+    #toast.success { border-color: var(--success); }
+    #toast.error { border-color: var(--danger); }
+
+    /* ── STATS BAR ── */
+    .stats-bar {
+      padding: 8px 24px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 24px;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    .stats-bar span { color: var(--accent); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .main { flex-direction: column; }
+      .sidebar { width: 100%; min-width: unset; max-height: 50vh; border-right: none; border-bottom: 1px solid var(--border); }
+    }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 24px;
+      max-width: 480px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .modal h3 {
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--accent);
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-close {
+      float: right;
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 1.2rem;
+    }
+    .modal-close:hover { color: var(--text); }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <h1>🎬 作品集编辑器</h1>
+  <div class="header-actions">
+    <button class="btn" onclick="switchSection('works')" id="tab-works">📷 作品</button>
+    <button class="btn" onclick="switchSection('videos')" id="tab-videos">🎥 视频</button>
+    <button class="btn" onclick="switchSection('about')" id="tab-about">👤 关于</button>
+    <button class="btn btn-primary" onclick="downloadHTML()">⬇️ 下载 portfolio.html</button>
+  </div>
+</header>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- SIDEBAR: 编辑表单 -->
+  <div class="sidebar" id="sidebar">
+    <div class="empty-sidebar" id="empty-sidebar">
+      👈 选择一个作品开始编辑<br>或点击下方「+」添加新作品
+    </div>
+    <div id="edit-form" style="display:none;">
+      <div class="sidebar-title">✏️ 编辑作品</div>
+
+      <div class="form-group">
+        <label>年份</label>
+        <input type="text" id="f-year" placeholder="如：2026" oninput="autoSave()">
+      </div>
+
+      <div class="form-group">
+        <label>标题</label>
+        <input type="text" id="f-title" placeholder="作品名称" oninput="autoSave()">
+      </div>
+
+      <div class="form-group">
+        <label>描述（可选）</label>
+        <input type="text" id="f-desc" placeholder="简短描述" oninput="autoSave()">
+      </div>
+
+      <div class="form-group">
+        <label>媒体文件 URL</label>
+        <textarea id="f-urls" placeholder="一行一个URL，支持：&#10;jpg / png / gif / mp4 / webm&#10;&#10;示例：&#10;https://example.com/photo.jpg&#10;https://example.com/video.mp4" oninput="autoSave()"></textarea>
+      </div>
+
+      <div class="img-preview-list" id="img-preview-list"></div>
+
+      <div style="display:flex;gap:6px;margin-top:6px;">
+        <button class="btn btn-sm" onclick="testImageURL()">🔍 测试URL</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteCurrent()">🗑 删除</button>
+      </div>
+
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+        <button class="btn btn-sm" onclick="duplicateCurrent()" style="width:100%;">📋 复制此作品</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- WORKSPACE -->
+  <div class="workspace">
+    <div class="workspace-header">
+      <h2 id="section-label">📷 作品图片</h2>
+      <span class="badge" id="count-badge">0 个</span>
+    </div>
+
+    <div class="section-tabs">
+      <button class="section-tab active" onclick="switchSection('works')" id="btn-works">📷 图片作品</button>
+      <button class="section-tab" onclick="switchSection('videos')" id="btn-videos">🎥 视频作品</button>
+      <button class="section-tab" onclick="switchSection('about')" id="btn-about">👤 关于页面</button>
+    </div>
+
+    <!-- 作品网格 -->
+    <div class="card-list" id="card-list-works"></div>
+    <div class="card-list" id="card-list-videos" style="display:none;"></div>
+
+    <!-- 关于页面 -->
+    <div id="about-panel" style="display:none;">
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>个人简介（第一段）</label>
+        <textarea id="about-p1" style="min-height:80px;" oninput="autoSaveAbout()"></textarea>
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>个人简介（第二段）</label>
+        <textarea id="about-p2" style="min-height:80px;" oninput="autoSaveAbout()"></textarea>
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>个人简介（第三段）</label>
+        <textarea id="about-p3" style="min-height:80px;" oninput="autoSaveAbout()"></textarea>
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>技能标签（用逗号分隔）</label>
+        <input type="text" id="about-skills" placeholder="动态视觉,后期制作,Blender,C4D" oninput="autoSaveAbout()">
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>公众号</label>
+        <input type="text" id="about-wechat" placeholder="软组织 & 一群羊" oninput="autoSaveAbout()">
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>联系方式说明</label>
+        <input type="text" id="about-contact" placeholder="期待新的合作机会 · 欢迎项目洽谈" oninput="autoSaveAbout()">
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>亮点横幅文字</label>
+        <input type="text" id="about-highlight" placeholder="张艺谋新片《惊蛰无声》HUD动态视觉制作" oninput="autoSaveAbout()">
+      </div>
+    </div>
+
+    <!-- 添加按钮 -->
+    <div style="margin-top:16px; display:flex;gap:8px;" id="add-buttons">
+      <button class="add-card" onclick="addNew('works')" style="min-height:80px;flex-direction:row;gap:8px;">
+        <span class="icon">+</span>
+        <span>添加图片作品</span>
+      </button>
+      <button class="add-card" onclick="addNew('videos')" style="min-height:80px;flex-direction:row;gap:8px;">
+        <span class="icon">+</span>
+        <span>添加视频作品</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats-bar">
+  📷 图片作品：<span id="stat-works">0</span> 个
+  &nbsp;|&nbsp;
+  🎥 视频作品：<span id="stat-videos">0</span> 个
+  &nbsp;|&nbsp;
+  💾 数据自动保存至浏览器
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- ADD MODAL -->
+<div class="modal-overlay" id="add-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <h3>➕ 添加新作品</h3>
+    <div class="form-group">
+      <label>类型</label>
+      <select id="new-type">
+        <option value="works">📷 图片作品</option>
+        <option value="videos">🎥 视频作品</option>
+      </select>
+    </div>
+    <div class="form-group" style="margin-top:12px;">
+      <label>年份</label>
+      <input type="text" id="new-year" placeholder="如：2026">
+    </div>
+    <div class="form-group" style="margin-top:12px;">
+      <label>标题</label>
+      <input type="text" id="new-title" placeholder="作品名称">
+    </div>
+    <div class="form-group" style="margin-top:12px;">
+      <label>媒体URL（可选）</label>
+      <input type="text" id="new-url" placeholder="图片或视频URL">
+    </div>
+    <div class="form-group" style="margin-top:12px;">
+      <label>描述（视频用）</label>
+      <input type="text" id="new-desc" placeholder="简短描述">
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="confirmAdd()">添加</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// 数据结构
+// ═══════════════════════════════════════════════
+// 数据保存在 localStorage key: "portfolio_editor_v2"
+// 结构：{ works: [], videos: [], about: {} }
+
+const STORAGE_KEY = "portfolio_editor_v2";
+let currentSection = "works";
+let selectedId = null;
+let data = null;
+
+// ═══════════════════════════════════════════════
+// 初始化
+// ═══════════════════════════════════════════════
+function init() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    try {
+      data = JSON.parse(saved);
+    } catch(e) {
+      data = getDefaultData();
+    }
+  } else {
+    data = getDefaultData();
+  }
+  switchSection("works");
+  updateStats();
+}
+
+// ═══════════════════════════════════════════════
+// 默认数据（从当前 portfolio.html 提取）
+// ═══════════════════════════════════════════════
+function getDefaultData() {
+  return {
+    works: [
+      { id: "w1", year: "2026", title: "张艺谋《惊蛰无声》— HUD动态视觉", urls: ["https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/1goc/1205X1846/2026-02-27%E6%83%8A%E8%9B%B0%E6%97%A0%E5%A3%B0\\_09-31-59.jpg"] },
+      { id: "w2", year: "2023", title: "技能人生", urls: ["https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/pM4w/4017X7876/2023.02%E6%8A%80%E8%83%BD%E4%BA%BA%E7%94%9F.jpg"] },
+      { id: "w3", year: "2022", title: "璞裙 · 国家艺术基金 · 浙江音乐学院", urls: ["https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/REuo/2001X7853/20220309.%E7%92%9E%E8%A3%99.jpg"] },
+      { id: "w4", year: "2022", title: "动态视觉设计", urls: ["https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/kLmo/1823X2479/2022.05b.jpeg"] },
+      { id: "w5", year: "2022", title: "品牌动态视觉", urls: ["https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/AjeF/1889X2209/2022.05a.jpeg"] },
+      { id: "w6", year: "2022", title: "高碑店", urls: ["https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/5pDJ/2001X3163/2022.01%E9%AB%98%E7%A2%91%E5%BA%97.png"] },
+      { id: "w7", year: "2021", title: "腾讯体育 · 法甲「一周说法」", urls: ["https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/Vynp/640X1894/2021.12.jpeg"] },
+      { id: "w8", year: "2020", title: "奥布替尼 · 品牌宣传片", urls: ["https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/rNRy/1018X684/2020%E5%A5%A5%E5%B8%83%E6%9B%BF%E5%B0%BC%E5%AE%A3%E4%BC%A0%E7%89%87cut.mp4.jpg"] },
+      { id: "w9", year: "2020", title: "动态视觉设计", urls: ["https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/lmOt/931X2614/2020.873600.jpeg"] },
+      { id: "w10", year: "2020", title: "只有河南 · 文旅项目", urls: ["https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/39Cb/2000X1283/2020.11%E5%8F%AA%E6%9C%89%E6%B2%B3%E5%8D%97A04.png"] },
+      { id: "w11", year: "2020", title: "只有河南 · 视觉呈现", urls: ["https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/QxC5/2000X1035/2020.11%E5%8F%AA%E6%9C%89%E6%B2%B3%E5%8D%97A01.jpg"] },
+      { id: "w12", year: "2019", title: "国窖1573 · 品牌广告片", urls: ["https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/ctaT/960X544/2019%E5%9B%BD%E7%AA%961573%E5%B9%BF%E5%91%8A%E7%89%87.mp4\\_20210315\\_202027.075.jpg"] },
+      { id: "w13", year: "2018", title: "湘约韩国 · 宣传片", urls: ["https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/Xcd0/3837X3013/2018%E6%B9%98%E7%BA%A6%E9%9F%A9%E5%9B%BD%E5%AE%A3%E4%BC%A0%E7%89%8706061.jpg"] },
+      { id: "w14", year: "2006", title: "凤凰卫视 · 栏目包装", urls: ["https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/nybl/4401X9534/2006\\_%E9%BB%98%E6%B2%99%E4%B8%9C1.jpg"] },
+      { id: "w15", year: "2005–2016", title: "凤凰卫视 · 多年作品精选", urls: ["https://test.fukit.cn/autoupload/fr/zNX4ZXg1ItjU83xbHOV29LdPIQax92egWrnAyre3P9iyl5f0KlZfm6UsKj-HyTuv/20260324/ZywA/763X2603/2005.2016.93.jpeg"] },
+    ],
+    videos: [
+      { id: "v1", year: "2023–2025", title: "蒙太奇系列", desc: "实验影像 · 个人创作系列", urls: [], link: "https://mp.weixin.qq.com/s/sZpYU6QGf2ZuJu2oFCQ8Bg" },
+      { id: "v2", year: "2019–2021", title: "品牌作品集 · 2019–2021", desc: "国窖1573 · 只有河南 · 奔驰 · 抖音电商 · 天津银行", urls: [], link: "https://mp.weixin.qq.com/s/7yZHW8lBawTjYCQ1VVHRWw" },
+      { id: "v3", year: "2021–2022", title: "品牌作品集 · 2021–2022", desc: "冬奥开场 · 法甲 · BTV 315晚会 · 璞裙", urls: [], link: "https://mp.weixin.qq.com/s/GzkYYToSOBmOxbWgdnqXQQ" },
+      { id: "v4", year: "2020", title: "作品集 · 文化大观园专辑", desc: "凤凰卫视 · 文化大观园系列", urls: [], link: "https://mp.weixin.qq.com/s/wE_kmjxFRt83wUTYcQEDlA" },
+      { id: "v5", year: "2016–2020", title: "品牌作品集 · 凤凰时代", desc: "中华医道 · 文化大观园600期 · 朱丹无限", urls: [], link: "https://mp.weixin.qq.com/s/LdKwtiz68JjbHbOD1jAlYg" },
+      { id: "v6", year: "2005–2016", title: "早期精选 · E-Box 至凤凰", desc: "凤凰卫视 · 栏目包装 · 早期作品", urls: [], link: "https://mp.weixin.qq.com/s/NDtfq_qKgr2zCUWzOvri3w" },
+    ],
+    about: {
+      p1: "从业二十八年，专注于动态视觉设计、后期制作与三维特效。2006–2020年供职于凤凰卫视，参与数百期节目包装与栏目视觉体系建设。",
+      p2: "离开凤凰后持续深耕，客户涵盖国窖1573、奔驰、抖音、央视、北京卫视、腾讯体育、金山办公等头部品牌。",
+      p3: "2026年完成张艺谋电影《惊蛰无声》HUD动态视觉制作，是近年国产电影视觉技术探索的代表性参与者。",
+      skills: "动态视觉,后期制作,栏目包装,Blender,Houdini,C4D,HUD特效,品牌内容,三维动画,AI视频",
+      wechat: "软组织 & 一群羊",
+      contact: "期待新的合作机会 · 欢迎项目洽谈",
+      highlight: "张艺谋新片《惊蛰无声》HUD动态视觉制作（2026）"
+    }
+  };
+}
+
+// ═══════════════════════════════════════════════
+// 切换区块
+// ═══════════════════════════════════════════════
+function switchSection(section) {
+  currentSection = section;
+
+  // 更新tab高亮
+  ["works","videos","about"].forEach(s => {
+    document.getElementById("tab-" + s).classList.toggle("active", s === section);
+    document.getElementById("btn-" + s).classList.toggle("active", s === section);
+  });
+
+  // 切换内容区
+  document.getElementById("card-list-works").style.display = section === "works" ? "" : "none";
+  document.getElementById("card-list-videos").style.display = section === "videos" ? "" : "none";
+  document.getElementById("about-panel").style.display = section === "about" ? "" : "none";
+  document.getElementById("add-buttons").style.display = (section === "works" || section === "videos") ? "" : "none";
+
+  document.getElementById("section-label").textContent =
+    section === "works" ? "📷 图片作品" :
+    section === "videos" ? "🎥 视频作品" : "👤 关于页面";
+
+  if (section === "about") {
+    loadAboutForm();
+    showEmptyForm(false);
+  } else {
+    renderCards(section);
+  }
+
+  updateStats();
+}
+
+// ═══════════════════════════════════════════════
+// 渲染卡片
+// ═══════════════════════════════════════════════
+function renderCards(type) {
+  const list = data[type];
+  const container = document.getElementById(type === "works" ? "card-list-works" : "card-list-videos");
+  const countBadge = document.getElementById("count-badge");
+
+  countBadge.textContent = list.length + " 个";
+  container.innerHTML = "";
+
+  list.forEach(item => {
+    const isVideo = type === "videos";
+    const firstUrl = (item.urls && item.urls[0]) ? item.urls[0] : null;
+    const isVideoFile = firstUrl && (firstUrl.match(/\.(mp4|webm|ogv)$/i) || firstUrl.match(/video/i));
+
+    const card = document.createElement("div");
+    card.className = "item-card" + (selectedId === item.id ? " selected" : "");
+    card.onclick = (e) => {
+      e.stopPropagation();
+      selectItem(type, item.id);
+    };
+
+    let mediaHTML = "";
+    if (isVideo && !firstUrl) {
+      mediaHTML = `<div class="item-card-video">▶</div>`;
+    } else if (isVideoFile) {
+      mediaHTML = `<div class="item-card-video">▶ VIDEO</div>`;
+    } else if (firstUrl) {
+      const badge = getMediaBadge(firstUrl);
+      mediaHTML = `<img class="item-card-img" src="${escHtml(firstUrl)}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+        <div class="item-card-video" style="display:none">❌ 无法加载</div>`;
+    } else {
+      mediaHTML = `<div class="item-card-video">📷</div>`;
+    }
+
+    card.innerHTML = `
+      ${mediaHTML}
+      <div class="item-card-body">
+        <div class="item-card-year">${escHtml(item.year)}</div>
+        <div class="item-card-title">${escHtml(item.title || "无标题")}</div>
+        ${isVideo && item.desc ? `<div class="item-card-type">${escHtml(item.desc)}</div>` : ""}
+      </div>
+      <div class="item-card-actions">
+        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteItem('${type}','${item.id}')">🗑</button>
+      </div>
+    `;
+
+    container.appendChild(card);
+  });
+}
+
+function getMediaBadge(url) {
+  if (!url) return "";
+  if (url.match(/\.(gif)$/i)) return '<span class="img-type-badge badge-gif">GIF</span>';
+  if (url.match(/\.(mp4|webm|ogv|video)/i)) return '<span class="img-type-badge badge-video">VIDEO</span>';
+  return '<span class="img-type-badge badge-img">IMG</span>';
+}
+
+// ═══════════════════════════════════════════════
+// 选择编辑
+// ═══════════════════════════════════════════════
+function selectItem(type, id) {
+  selectedId = id;
+  const list = data[type];
+  const item = list.find(x => x.id === id);
+  if (!item) return;
+
+  // 高亮卡片
+  document.querySelectorAll(".item-card").forEach(c => c.classList.remove("selected"));
+  event.currentTarget.classList.add("selected");
+
+  document.getElementById("empty-sidebar").style.display = "none";
+  document.getElementById("edit-form").style.display = "block";
+
+  document.getElementById("f-year").value = item.year || "";
+  document.getElementById("f-title").value = item.title || "";
+  document.getElementById("f-desc").value = item.desc || "";
+  document.getElementById("f-urls").value = (item.urls || []).join("\n");
+
+  renderImagePreviews(item.urls || []);
+}
+
+function renderImagePreviews(urls) {
+  const container = document.getElementById("img-preview-list");
+  container.innerHTML = "";
+  (urls || []).forEach((url, i) => {
+    if (!url.trim()) return;
+    const isVideo = url.match(/\.(mp4|webm|ogv)$/i) || url.match(/video/i);
+    const isGif = url.match(/\.gif$/i);
+    const div = document.createElement("div");
+    div.className = "img-preview-item";
+    div.innerHTML = `
+      ${isVideo ? `<video src="${escHtml(url)}" muted loop onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"></video>
+        <div style="display:none;align-items:center;justify-content:center;height:100px;background:#1a1a26;color:#888;font-size:0.75rem;">❌ 视频加载失败</div>`
+        : `<img src="${escHtml(url)}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+        <div style="display:none;align-items:center;justify-content:center;height:100px;background:#1a1a26;color:#888;font-size:0.75rem;">❌ 图片加载失败</div>`}
+      <span class="img-type-badge ${isVideo ? 'badge-video' : isGif ? 'badge-gif' : 'badge-img'}">${isVideo ? 'VIDEO' : isGif ? 'GIF' : 'IMG'}</span>
+      <button class="remove-btn" onclick="removeUrl(${i})">×</button>
+    `;
+    container.appendChild(div);
+  });
+}
+
+// ═══════════════════════════════════════════════
+// 自动保存（编辑区）
+// ═══════════════════════════════════════════════
+function autoSave() {
+  if (!selectedId) return;
+  const type = currentSection === "about" ? null :
+    (document.getElementById("card-list-works").style.display !== "none" ? "works" : "videos");
+  if (!type) return;
+
+  const list = data[type];
+  const item = list.find(x => x.id === selectedId);
+  if (!item) return;
+
+  item.year = document.getElementById("f-year").value.trim();
+  item.title = document.getElementById("f-title").value.trim();
+  item.desc = document.getElementById("f-desc").value.trim();
+  item.urls = document.getElementById("f-urls").value.split("\n").map(s => s.trim()).filter(Boolean);
+
+  save();
+  renderCards(type);
+}
+
+// ═══════════════════════════════════════════════
+// 关于页面
+// ═══════════════════════════════════════════════
+function loadAboutForm() {
+  const a = data.about;
+  document.getElementById("about-p1").value = a.p1 || "";
+  document.getElementById("about-p2").value = a.p2 || "";
+  document.getElementById("about-p3").value = a.p3 || "";
+  document.getElementById("about-skills").value = a.skills || "";
+  document.getElementById("about-wechat").value = a.wechat || "";
+  document.getElementById("about-contact").value = a.contact || "";
+  document.getElementById("about-highlight").value = a.highlight || "";
+}
+
+function autoSaveAbout() {
+  data.about.p1 = document.getElementById("about-p1").value;
+  data.about.p2 = document.getElementById("about-p2").value;
+  data.about.p3 = document.getElementById("about-p3").value;
+  data.about.skills = document.getElementById("about-skills").value;
+  data.about.wechat = document.getElementById("about-wechat").value;
+  data.about.contact = document.getElementById("about-contact").value;
+  data.about.highlight = document.getElementById("about-highlight").value;
+  save();
+}
+
+// ═══════════════════════════════════════════════
+// 删除 URL
+// ═══════════════════════════════════════════════
+function removeUrl(index) {
+  const type = document.getElementById("card-list-works").style.display !== "none" ? "works" : "videos";
+  const item = data[type].find(x => x.id === selectedId);
+  if (!item) return;
+  item.urls.splice(index, 1);
+  document.getElementById("f-urls").value = (item.urls || []).join("\n");
+  save();
+  renderImagePreviews(item.urls);
+  renderCards(type);
+}
+
+// ═══════════════════════════════════════════════
+// 新增 / 删除 / 复制
+// ═══════════════════════════════════════════════
+function addNew(type) {
+  document.getElementById("new-type").value = type;
+  document.getElementById("new-year").value = new Date().getFullYear().toString();
+  document.getElementById("new-title").value = "";
+  document.getElementById("new-url").value = "";
+  document.getElementById("new-desc").value = "";
+  document.getElementById("add-modal").classList.add("open");
+}
+
+function closeModal() {
+  document.getElementById("add-modal").classList.remove("open");
+}
+
+function confirmAdd() {
+  const type = document.getElementById("new-type").value;
+  const year = document.getElementById("new-year").value.trim();
+  const title = document.getElementById("new-title").value.trim();
+  const url = document.getElementById("new-url").value.trim();
+  const desc = document.getElementById("new-desc").value.trim();
+
+  if (!title) { toast("请输入标题", "error"); return; }
+
+  const newItem = {
+    id: "item_" + Date.now(),
+    year: year || new Date().getFullYear().toString(),
+    title,
+    desc: desc || "",
+    urls: url ? [url] : [],
+    link: type === "videos" ? url : undefined
+  };
+
+  data[type].unshift(newItem);
+  save();
+  closeModal();
+  switchSection(type);
+  toast(`已添加「${title}」`);
+}
+
+function deleteItem(type, id) {
+  if (!confirm("确定删除这个作品？")) return;
+  data[type] = data[type].filter(x => x.id !== id);
+  if (selectedId === id) { selectedId = null; showEmptyForm(true); }
+  save();
+  renderCards(type);
+  updateStats();
+}
+
+function deleteCurrent() {
+  if (!selectedId) return;
+  const type = document.getElementById("card-list-works").style.display !== "none" ? "works" : "videos";
+  deleteItem(type, selectedId);
+}
+
+function duplicateCurrent() {
+  if (!selectedId) return;
+  const type = document.getElementById("card-list-works").style.display !== "none" ? "works" : "videos";
+  const item = data[type].find(x => x.id === selectedId);
+  if (!item) return;
+  const copy = JSON.parse(JSON.stringify(item));
+  copy.id = "item_" + Date.now();
+  copy.title = copy.title + "（副本）";
+  const idx = data[type].findIndex(x => x.id === selectedId);
+  data[type].splice(idx + 1, 0, copy);
+  save();
+  renderCards(type);
+  selectItem(type, copy.id);
+  toast("已复制");
+}
+
+// ═══════════════════════════════════════════════
+// 测试URL
+// ═══════════════════════════════════════════════
+function testImageURL() {
+  const urls = document.getElementById("f-urls").value.split("\n").map(s => s.trim()).filter(Boolean);
+  if (urls.length === 0) { toast("请先输入URL", "error"); return; }
+  const win = window.open(urls[0], "_blank");
+  if (!win) toast("请允许弹出窗口", "error");
+  else toast("已在新标签页打开第一张图片");
+}
+
+// ═══════════════════════════════════════════════
+// 生成 portfolio.html
+// ═══════════════════════════════════════════════
+function downloadHTML() {
+  const html = generatePortfolioHTML();
+  const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "portfolio.html";
+  a.click();
+  URL.revokeObjectURL(url);
+  toast("已下载 portfolio.html，请上传到 GitHub");
+}
+
+function generatePortfolioHTML() {
+  const d = data;
+  const worksHTML = d.works.map(w => {
+    const firstUrl = (w.urls && w.urls[0]) ? w.urls[0] : "";
+    const isVideo = firstUrl.match(/\.(mp4|webm|ogv)$/i);
+    if (isVideo) {
+      return `    <div class="work-item">
+      <video src="${escHtml(firstUrl)}" controls style="width:100%;border-radius:6px;background:#000;"></video>
+      <div class="work-overlay">
+        <span class="work-year">${escHtml(w.year)}</span>
+        <span class="work-title">${escHtml(w.title)}</span>
+      </div>
+    </div>`;
+    }
+    if (!firstUrl) return "";
+    return `    <div class="work-item" onclick="openLightbox('${escHtml(firstUrl)}')">
+      <img src="${escHtml(firstUrl)}" alt="${escHtml(w.title)}" loading="lazy" />
+      <div class="work-overlay">
+        <span class="work-year">${escHtml(w.year)}</span>
+        <span class="work-title">${escHtml(w.title)}</span>
+      </div>
+    </div>`;
+  }).filter(Boolean).join("\n");
+
+  const videosHTML = d.videos.map(v => {
+    return `    <a class="video-card" href="${escHtml(v.link || '#')}" target="_blank" rel="noopener">
+      <div class="video-icon">▶</div>
+      <div class="video-info">
+        <span class="video-year">${escHtml(v.year)}</span>
+        <div class="video-title">${escHtml(v.title)}</div>
+        <div class="video-desc">${escHtml(v.desc || "")}</div>
+      </div>
+      <span class="video-arrow">→</span>
+    </a>`;
+  }).join("\n");
+
+  const skillsHTML = (d.about.skills || "").split(",").map(s => `<span class="skill-tag">${escHtml(s.trim())}</span>`).join("\n        ");
+
+  return `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>周群 · 动态视觉设计作品集</title>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --surface2: #1a1a26;
+      --accent: #c8a96e;
+      --accent2: #7ec8c8;
+      --text: #e8e4dc;
+      --muted: #888;
+      --border: rgba(200,169,110,0.15);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      line-height: 1.6;
+    }
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 60px 20px;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 30%, rgba(200,169,110,0.08) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 40% at 20% 80%, rgba(126,200,200,0.06) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .hero-tag {
+      font-size: 11px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1px solid var(--border);
+      padding: 5px 16px;
+      border-radius: 20px;
+      margin-bottom: 28px;
+      display: inline-block;
+    }
+    .hero h1 {
+      font-size: clamp(2.4rem, 6vw, 5rem);
+      font-weight: 300;
+      letter-spacing: 0.05em;
+      line-height: 1.1;
+      margin-bottom: 16px;
+    }
+    .hero h1 em { font-style: normal; color: var(--accent); }
+    .hero-sub {
+      font-size: clamp(0.9rem, 2vw, 1.1rem);
+      color: var(--muted);
+      max-width: 560px;
+      margin: 0 auto 48px;
+    }
+    .hero-stats {
+      display: flex;
+      gap: 48px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .stat { text-align: center; }
+    .stat-num { font-size: 2rem; font-weight: 300; color: var(--accent); display: block; }
+    .stat-label { font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+    .highlight-bar {
+      background: linear-gradient(90deg, rgba(200,169,110,0.12), rgba(126,200,200,0.08));
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 40px;
+      text-align: center;
+    }
+    .highlight-bar p {
+      font-size: 0.95rem;
+      color: var(--text);
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .highlight-bar strong { color: var(--accent); }
+    section {
+      padding: 80px 40px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .section-header { margin-bottom: 48px; }
+    .section-label {
+      font-size: 10px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--accent2);
+      display: block;
+      margin-bottom: 8px;
+    }
+    .section-header h2 {
+      font-size: clamp(1.6rem, 3vw, 2.4rem);
+      font-weight: 300;
+      color: var(--text);
+    }
+    .section-header h2 em { font-style: normal; color: var(--accent); }
+    .works-grid {
+      columns: 3;
+      column-gap: 16px;
+    }
+    @media (max-width: 900px) { .works-grid { columns: 2; } }
+    @media (max-width: 560px) { .works-grid { columns: 1; } }
+    .work-item {
+      break-inside: avoid;
+      margin-bottom: 16px;
+      position: relative;
+      cursor: pointer;
+      border-radius: 6px;
+      overflow: hidden;
+      background: var(--surface);
+      border: 1px solid transparent;
+      transition: border-color 0.3s, transform 0.3s;
+    }
+    .work-item:hover {
+      border-color: var(--accent);
+      transform: translateY(-3px);
+    }
+    .work-item img, .work-item video {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .work-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(transparent, rgba(0,0,0,0.85));
+      padding: 24px 14px 14px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .work-item:hover .work-overlay { opacity: 1; }
+    .work-year { font-size: 10px; letter-spacing: 2px; color: var(--accent); display: block; margin-bottom: 3px; }
+    .work-title { font-size: 0.85rem; color: #fff; font-weight: 500; }
+    .video-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 20px;
+    }
+    .video-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 24px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      transition: border-color 0.3s, background 0.3s;
+    }
+    .video-card:hover {
+      border-color: var(--accent);
+      background: var(--surface2);
+    }
+    .video-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(200,169,110,0.12);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: var(--accent);
+      font-size: 1.1rem;
+    }
+    .video-info { flex: 1; min-width: 0; }
+    .video-year {
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--accent2);
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .video-title {
+      font-size: 0.95rem;
+      color: var(--text);
+      font-weight: 500;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .video-desc { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
+    .video-arrow {
+      color: var(--accent);
+      font-size: 1rem;
+      flex-shrink: 0;
+      align-self: center;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .video-card:hover .video-arrow { opacity: 1; }
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: start;
+    }
+    @media (max-width: 700px) { .about-grid { grid-template-columns: 1fr; gap: 40px; } }
+    .about-text p { color: #aaa; font-size: 0.95rem; margin-bottom: 16px; }
+    .about-text p strong { color: var(--accent); }
+    .skills-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+    .skill-tag {
+      background: rgba(200,169,110,0.08);
+      border: 1px solid var(--border);
+      color: var(--accent);
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      letter-spacing: 0.5px;
+    }
+    .timeline { list-style: none; }
+    .timeline li {
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 20px;
+    }
+    .timeline li:last-child { border-bottom: none; }
+    .tl-year { font-size: 0.85rem; color: var(--accent); min-width: 100px; font-weight: 300; }
+    .tl-content { font-size: 0.9rem; color: #aaa; }
+    .tl-content strong { color: var(--text); display: block; margin-bottom: 2px; }
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 60px 40px;
+      text-align: center;
+    }
+    footer p { color: var(--muted); font-size: 0.85rem; margin-bottom: 8px; }
+    footer .contact-note { font-size: 1.1rem; color: var(--text); margin-bottom: 4px; }
+    #lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.92);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    #lightbox.open { display: flex; }
+    #lightbox img {
+      max-width: 90vw;
+      max-height: 90vh;
+      object-fit: contain;
+      border-radius: 4px;
+    }
+    #lightbox-close {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      font-size: 2rem;
+      color: #aaa;
+      cursor: pointer;
+      background: none;
+      border: none;
+      line-height: 1;
+    }
+    #lightbox-close:hover { color: #fff; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<header class="hero">
+  <span class="hero-tag">Motion · Visual · Design</span>
+  <h1>周群<br><em>动态视觉设计</em></h1>
+  <p class="hero-sub">从凤凰卫视到张艺谋新片，二十余年专注于动态视觉与后期制作。</p>
+  <div class="hero-stats">
+    <div class="stat"><span class="stat-num">28+</span><span class="stat-label">年从业经验</span></div>
+    <div class="stat"><span class="stat-num">14</span><span class="stat-label">年凤凰卫视</span></div>
+    <div class="stat"><span class="stat-num">30+</span><span class="stat-label">品牌合作</span></div>
+  </div>
+</header>
+
+<div class="highlight-bar">
+  <p>最新项目：<strong>${escHtml(d.about.highlight || "")}</strong></p>
+</div>
+
+<section>
+  <div class="section-header">
+    <span class="section-label">Selected Works</span>
+    <h2>作品<em>精选</em></h2>
+  </div>
+  <div class="works-grid">
+${worksHTML}
+  </div>
+</section>
+
+<section style="padding-top: 0;">
+  <div class="section-header">
+    <span class="section-label">Video Works</span>
+    <h2>视频<em>作品</em></h2>
+  </div>
+  <div class="video-list">
+${videosHTML}
+  </div>
+</section>
+
+<section>
+  <div class="section-header">
+    <span class="section-label">About</span>
+    <h2>关于<em>周群</em></h2>
+  </div>
+  <div class="about-grid">
+    <div class="about-text">
+      <p>${escHtml(d.about.p1 || "")}</p>
+      <p>${escHtml(d.about.p2 || "")}</p>
+      <p>${escHtml(d.about.p3 || "")}</p>
+      <div class="skills-list">
+        ${skillsHTML}
+      </div>
+    </div>
+    <div>
+      <ul class="timeline">
+        <li><span class="tl-year">2026</span><div class="tl-content"><strong>张艺谋《惊蛰无声》</strong>HUD动态视觉制作</div></li>
+        <li><span class="tl-year">2020–今</span><div class="tl-content"><strong>自由职业设计师</strong>奔驰、抖音、国窖1573、央视等多品牌合作</div></li>
+        <li><span class="tl-year">2006–2020</span><div class="tl-content"><strong>凤凰卫视</strong>后期制作 · 动态视觉 · 三维设计（14年）</div></li>
+        <li><span class="tl-year">2003</span><div class="tl-content"><strong>中央电视台春节联欢晚会</strong>参与视觉制作</div></li>
+        <li><span class="tl-year">1998–</span><div class="tl-content"><strong>入行设计</strong>开启动态视觉从业生涯</div></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>${escHtml(d.about.contact || "")}</p>
+  <p class="contact-note">公众号：${escHtml(d.about.wechat || "")}</p>
+  <p style="margin-top: 24px; font-size: 0.75rem; opacity: 0.4;">© ${new Date().getFullYear()} 周群 · 动态视觉设计</p>
+</footer>
+
+<div id="lightbox">
+  <button id="lightbox-close" onclick="closeLightbox()">×</button>
+  <img id="lightbox-img" src="" alt="" />
+</div>
+
+<script>
+  function openLightbox(src) {
+    document.getElementById('lightbox-img').src = src;
+    document.getElementById('lightbox').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.getElementById('lightbox').addEventListener('click', function(e) {
+    if (e.target === this) closeLightbox();
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeLightbox();
+  });
+</script>
+
+</body>
+</html>`;
+}
+
+// ═══════════════════════════════════════════════
+// 工具函数
+// ═══════════════════════════════════════════════
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function updateStats() {
+  document.getElementById("stat-works").textContent = data.works.length;
+  document.getElementById("stat-videos").textContent = data.videos.length;
+}
+
+function showEmptyForm(show) {
+  document.getElementById("empty-sidebar").style.display = show ? "" : "none";
+  document.getElementById("edit-form").style.display = show ? "none" : "block";
+  if (show) {
+    document.getElementById("empty-sidebar").style.display = "";
+    document.getElementById("edit-form").style.display = "none";
+  }
+}
+
+function toast(msg, type = "") {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "show " + type;
+  setTimeout(() => t.className = "", 2500);
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+// ═══════════════════════════════════════════════
+// 启动
+// ═══════════════════════════════════════════════
+init();
+</script>
+</body>
+</html>
