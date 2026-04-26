@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio Editor | 作品集编辑器</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:#f0f2f5;color:#333;line-height:1.6}
+h1{font-size:1.6rem;font-weight:700;color:#1a1a1a;margin-bottom:.5rem}
+.header{background:#1a1a2e;color:#fff;padding:1.5rem 2rem;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.15)}
+.header-info h1{font-size:1.4rem;background:none;-webkit-text-fill-color:auto;color:#fff}
+.header-info p{font-size:.82rem;color:rgba(255,255,255,.6);margin-top:.2rem}
+.btn-group{display:flex;gap:.75rem}
+
+/* Buttons */
+.btn{padding:.6rem 1.4rem;border-radius:8px;font-size:.88rem;font-weight:600;cursor:pointer;border:none;transition:all .2s;display:inline-flex;align-items:center;gap:.4rem}
+.btn-primary{background:#c9a96e;color:#000}.btn-primary:hover{background:#b89450}
+.btn-secondary{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2)}.btn-secondary:hover{background:rgba(255,255,255,.2)}
+.btn-success{background:#2e7d32;color:#fff}.btn-success:hover{background:#1b5e20}
+.btn-danger{background:#c62828;color:#fff}.btn-danger:hover{background:#b71c1c}
+.btn-sm{padding:.4rem .8rem;font-size:.78rem}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* Main layout */
+.main{max-width:1300px;margin:0 auto;padding:2rem;display:grid;grid-template-columns:340px 1fr;gap:2rem;min-height:calc(100vh - 80px)}
+
+/* Sidebar */
+.sidebar{background:#fff;border-radius:12px;padding:1.5rem;height:fit-content;position:sticky;top:100px;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.sidebar h3{font-size:1rem;margin-bottom:1rem;padding-bottom:.6rem;border-bottom:2px solid #c9a96e}
+.form-group{margin-bottom:1.2rem}
+.form-group label{display:block;font-size:.82rem;color:#666;margin-bottom:.35rem;font-weight:600}
+.form-group input,.form-group textarea,.form-group select{
+  width:100%;padding:.55rem .75rem;border:1.5px solid #e0e0e0;border-radius:8px;font-size:.88rem;
+  font-family:inherit;transition:border-color .2s;background:#fafafa
+}
+.form-group input:focus,.form-group textarea:focus,.form-group select:focus{outline:none;border-color:#c9a96e;background:#fff}
+.form-group textarea{resize:vertical;min-height:60px}
+
+/* Card list */
+.card-list{display:flex;flex-direction:column;gap:1rem}
+.card-item{
+  background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.05);
+  transition:transform .2s,box-shadow .2s;cursor:grab;position:relative
+}
+.card-item:hover{box-shadow:0 4px 20px rgba(0,0,0,.1);transform:translateY(-2px)}
+.card-item.dragging{opacity:.5;transform:scale(.98);cursor:grabbing}
+.card-header{
+  display:flex;align-items:center;gap:.75rem;padding:.8rem 1rem;background:#fafafa;
+  border-bottom:1px solid #eee
+}
+.drag-handle{color:#bbb;font-size:1.2rem;cursor:grab;user-select:none;padding:0 .3rem}
+.card-num{font-weight:700;color:#c9a96e;font-size:.9rem;min-width:24px}
+.card-title-input{flex:1;border:1px solid transparent;border-radius:6px;padding:.3rem .5rem;font-size:.9rem;font-weight:600;transition:border-color .2s}
+.card-title-input:hover,.card-title-input:focus{border-color:#ddd;outline:none;background:#fff}
+.card-actions{display:flex;gap:.3rem}
+.card-body{padding:1rem}
+.card-images{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.8rem}
+.thumb-wrap{position:relative;width:80px;height:56px;border-radius:6px;overflow:hidden;border:2px solid #e0e0e0;cursor:pointer;transition:border-color .2s}
+.thumb-wrap:hover{border-color:#c9a96e}
+.thumb-wrap img{width:100%;height:100%;object-fit:cover}
+.thumb-remove{position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:#c62828;color:#fff;
+  border:none;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;
+  opacity:0;transition:opacity .2s
+}
+.thumb-wrap:hover .thumb-remove{opacity:1}
+.add-image-btn{
+  width:80px;height:56px;border:2px dashed #ccc;border-radius:6px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:#999;font-size:1.3rem;transition:all .2s;background:#fafafa
+}
+.add-image-btn:hover{border-color:#c9a96e;color:#c9a96e}
+.card-desc-input{width:100%;border:1px solid #e0e0e0;border-radius:6px;padding:.45rem .6rem;font-size:.82rem;
+  resize:none;background:#fafafa;transition:border-color .2s}
+.card-desc-input:focus{outline:none;border-color:#c9a96e;background:#fff}
+
+/* Layout selector */
+.layout-options{display:flex;gap:.4rem;margin-top:.5rem}
+.layout-btn{flex:1;padding:.35rem;border:1.5px solid #e0e0e0;border-radius:6px;background:#fff;
+  font-size:.72rem;text-align:center;cursor:pointer;transition:all .2s;color:#666;font-weight:600}
+.layout-btn.active{border-color:#c9a96e;background:#fef8ee;color:#8b6914}
+.layout-btn:hover:not(.active){border-color:#bbb}
+
+/* Empty state */
+.empty-state{text-align:center;padding:4rem 2rem;color:#999}
+.empty-state svg{width:64px;height:64px;margin-bottom:1rem;opacity:.3}
+.empty-state p{font-size:1rem}
+
+/* Status bar */
+.status-bar{background:#fff;border-top:1px solid #e0e0e0;padding:.7rem 2rem;font-size:.82rem;
+  color:#666;display:flex;justify-content:space-between;position:sticky;bottom:0;z-index:99}
+.status-ok{color:#2e7d32;font-weight:600}
+
+/* Hidden inputs */
+#file-input,#image-file-input{display:none}
+
+/* Toast */
+.toast{position:fixed;top:90px;right:2rem;background:#333;color:#fff;padding:.8rem 1.5rem;border-radius:8px;
+  font-size:.85rem;z-index:999;animation:slideIn .3s ease;box-shadow:0 4px 20px rgba(0,0,0,.2)
+}
+@keyframes slideIn{from{transform:translateX(40px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:14px;padding:2rem;width:500px;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal h3{font-size:1.15rem;margin-bottom:1.2rem}
+.modal .form-group{margin-bottom:1rem}
+.modal-actions{display:flex;gap:.75rem;justify-content:flex-end;margin-top:1.5rem}
+
+@media(max-width:900px){
+  .main{grid-template-columns:1fr;padding:1rem}
+  .sidebar{position:relative;top:0}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ Header ═══ -->
+<div class="header">
+  <div class="header-info">
+    <h1>&#x1F3AC; Portfolio Editor</h1>
+    <p>Drag cards to reorder / Click to edit / Add images per work</p>
+  </div>
+  <div class="btn-group">
+    <button class="btn btn-secondary" onclick="addNewItem()">+ New Work</button>
+    <button class="btn btn-primary" onclick="generateHTML()">&#x27A4; Generate index.html</button>
+    <button class="btn btn-success" onclick="previewSite()">&#x1F441; Preview</button>
+  </div>
+</div>
+
+<!-- ═══ Main ═══ -->
+<div class="main">
+  <!-- Sidebar: New/Edit form -->
+  <div class="sidebar">
+    <h3>Edit Selected Item</h3>
+    <div id="edit-form">
+      <p style="color:#999;font-size:.85rem;padding:1rem 0">Click a card on the right to edit it here.</p>
+    </div>
+
+    <h3 style="margin-top:1.5rem">Quick Actions</h3>
+    <div style="display:flex;flex-direction:column;gap:.6rem">
+      <button class="btn btn-secondary btn-sm" style="justify-content:center" onclick="importImages()">
+        &#x1F4C2; Import Images from media/
+      </button>
+      <button class="btn btn-secondary btn-sm" style="justify-content:center" onclick="resetToDefault()">
+        &#x21BA; Reset to Default
+      </button>
+      <button class="btn btn-secondary btn-sm" style="justify-content:center" onclick="exportData()">
+        &#x1F4BE; Export Data (JSON)
+      </button>
+      <input type="file" id="file-input" accept=".json" onchange="importData(event)">
+      <button class="btn btn-secondary btn-sm" style="justify-content:center" onclick="$('file-input').click()">
+        &#x1F4C1; Import Data (JSON)
+      </button>
+    </div>
+  </div>
+
+  <!-- Card List -->
+  <div class="card-list" id="card-list"></div>
+</div>
+
+<!-- ═══ Status Bar ═══ -->
+<div class="status-bar">
+  <span id="status-text">Ready</span>
+  <span><span id="item-count">0</span> works / <span id="image-count">0</span> images total</span>
+</div>
+
+<!-- ═══ Image File Input (hidden) ═══ -->
+<input type="file" id="image-file-input" multiple accept="image/*">
+
+<!-- ═══ Modal for new item ═══ -->
+<div class="modal-overlay" id="new-item-modal">
+  <div class="modal">
+    <h3>Add New Work</h3>
+    <div class="form-group">
+      <label>Title *</label>
+      <input type="text" id="new-title" placeholder="Work title">
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <textarea id="new-desc" placeholder="Short description"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Layout</label>
+      <select id="new-layout">
+        <option value="">Normal (1-col)</option>
+        <option value="wide">Wide (span 2 cols)</option>
+        <option value="tall">Tall (span 2 rows)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Images</label>
+      <div id="new-image-list" style="display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.4rem"></div>
+      <div class="add-image-btn" style="width:100%;height:40px;margin-top:.5rem" onclick="$('image-file-input').click()" data-target="new">+ Add Images</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmNewItem()">Add Work</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Data Store ───
+var data = [];
+var selectedIdx = -1;
+var pendingImages = [];
+
+var $ = function(id){ return document.getElementById(id); };
+
+// ─── Default Data ───
+var DEFAULT_DATA = [
+  {id:'p1',title:'Museum of The Times',desc:'Virtual museum system with four-act spatial narrative',layout:'wide',media:['media/p1_museum_calling.jpg']},
+  {id:'p2',title:'AI Animation Sequence',desc:'AI-generated imagery with original score',layout:'tall',media:['media/p2_chimera.png']},
+  {id:'p3',title:'Only Henan - Drama City',desc:'Urban landmark light compositing, The Mill style tracking',layout:'',media:['media/p3_henan_01.jpg','media/p3_henan_02.png','media/p3_henan_03.png','media/p3_henan_04.jpg','media/p3_henan_05.jpg']},
+  {id:'p4',title:'Miniature Cityscape',desc:'Oddfellows glowing paths, Cinema 4D + Redshift render',layout:'tall',media:['media/p4_cinema4d.jpg','media/p4_redshift.png']},
+  {id:'p5',title:'Storyboard & Topology',desc:'Cognitive topology diagrams and storyboard grid',layout:'',media:['media/p5_shot01.png','media/p5_shot02.png','media/p5_shot03.png','media/p5_shot04.png','media/p5_shot_all.png']},
+  {id:'p6',title:'Commercial Projects',desc:'Guojiao 1573 / Huawei / Benz / Qinling / Pukun / Skill Life / UAV',layout:'',media:['media/p6_guojiao1573.jpg','media/p6_huawei.jpg','media/p6_benz.jpg','media/p6_qinling.jpg','media/p6_pukun.jpg','media/p6_skill_life.jpg','media/extra_uav_01.jpg','media/extra_uav_02.jpg']}
+];
+
+// ─── Init ───
+(function(){
+  // Try load from localStorage first
+  var saved = localStorage.getItem('portfolio_editor_data');
+  if(saved){
+    try{data=JSON.parse(saved);}catch(e){data=[];}
+  }
+  // Merge defaults: keep saved items that have same IDs, add missing defaults
+  var merged=[];
+  var usedIds={};
+  if(data.length>0){
+    // Use user's data if it exists
+    data.forEach(function(d){merged.push(d);usedIds[d.id]=true;});
+  }
+  DEFAULT_DATA.forEach(function(d){
+    if(!usedIds[d.id])merged.push(d);
+  });
+  data=merged;
+
+  renderAll();
+  updateStatus();
+
+  // Image file input handler
+  $('image-file-input').addEventListener('change',handleImageFiles);
+})();
+
+// ─── Render All Cards ───
+function renderAll(){
+  var list=$('card-list');
+  if(data.length===0){
+    list.innerHTML='<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><p>No works yet.<br>Click "New Work" to get started.</p></div>';
+    return;
+  }
+
+  var html='';
+  for(var i=0;i<data.length;i++){
+    var it=data[i];
+    var thumbs='';
+    for(var j=0;j<it.media.length&&j<6;j++){
+      thumbs+='<div class="thumb-wrap"><img src="'+it.media[j]+'" alt=""><button class="thumb-remove" onclick="event.stopPropagation();removeImage('+i+','+j+')">&times;</button></div>';
+    }
+    if(it.media.length>6)thumbs+='<div class="thumb-wrap" style="display:flex;align-items:center;justify-content:center;background:#f0f0f0;color:#888;font-size:.7rem">+'+(it.media.length-6)+'</div>';
+    thumbs+='<div class="add-image-btn" onclick="event.stopPropagation();addImageToItem('+i+')">+</div>';
+
+    html+='<div class="card-item" draggable="true" data-idx="'+i+'" onclick="selectItem('+i+')">'
+      +'<div class="card-header">'
+      +'<span class="drag-handle">&#9776;</span>'
+      +'<span class="card-num">'+(i+1)+'</span>'
+      +'<input class="card-title-input" value="'+escHtml(it.title)+'" onclick="event.stopPropagation()" oninput="updateField('+i+',\'title\',this.value)" placeholder="Title">'
+      +'<div class="card-actions">'
+      +'<button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteItem('+i+')">&#128465;</button>'
+      +'</div></div>'
+      +'<div class="card-body">'
+      +'<div class="card-images">'+thumbs+'</div>'
+      +'<textarea class="card-desc-input" rows="2" onclick="event.stopPropagation()" oninput="updateField('+i+',\'desc\',this.value)" placeholder="Description...">'+escHtml(it.desc)+'</textarea>'
+      +'<div class="layout-options">'
+      +makeLayoutBtns(i,it.layout)
+      +'</div></div></div>';
+  }
+  list.innerHTML=html;
+
+  // Setup drag events
+  setupDragDrop();
+}
+
+function makeLayoutBtns(idx,current){
+  var opts=[['','Normal'],['wide','Wide'],['tall','Tall']];
+  return opts.map(function(o){
+    var active=o[0]===current?' active':'';
+    return '<button class="layout-btn'+active+'" onclick="event.stopPropagation();updateField('+idx+',\'layout\''+\',\''+o[0]+'\')">'+o[1]+'</button>';
+  }).join('');
+}
+
+// ─── Selection & Editing ───
+function selectItem(idx){
+  selectedIdx=idx;
+  updateEditForm(data[idx]);
+  // Highlight selected
+  document.querySelectorAll('.card-item').forEach(function(c,i){
+    c.style.outline=(i===idx)?'3px solid #c9a96e':'none';
+  });
+}
+
+function updateEditForm(item){
+  if(!item){
+    $('edit-form').innerHTML='<p style="color:#999;font-size:.85rem;padding:1rem 0">Click a card on the right to edit it here.</p>';
+    return;
+  }
+  var thumbs='<div class="card-images">';
+  for(var i=0;i<item.media.length;i++){
+    thumbs+='<div class="thumb-wrap" style="width:70px;height:48px"><img src="'+item.media[i]+'">'
+      +'<button class="thumb-remove" onclick="removeImage('+selectedIdx+','+i+')">&times;</button></div>';
+  }
+  thumbs+='<div class="add-image-btn" style="width:70px;height:48px" onclick="addImageToItem('+selectedIdx+')">+</div></div>';
+
+  $('edit-form').innerHTML=
+    '<div class="form-group"><label>ID</label><input type="text" value="'+item.id+'" oninput="updateField('+selectedIdx+','\''+'id\'\',this.value)"></div>'
+    +'<div class="form-group"><label>Title</label><input type="text" value="'+escAttr(item.title)+'" oninput="updateField('+selectedIdx+','\''+'title\'\',this.value)"></div>'
+    +'<div class="form-group"><label>Description</label><textarea oninput="updateField('+selectedIdx+','\''+'desc\'\',this.value)" rows="3">'+escHtml(item.desc)+'</textarea></div>'
+    +'<div class="form-group"><label>Layout</label>'
+    +'<div class="layout-options">'+makeLayoutBtns(selectedIdx,item.layout)+'</div></div>'
+    +'<div class="form-group"><label>Images ('+item.media.length+')</div>'+thumbs+'</div>'
+    +'<div style="margin-top:1rem;display:flex;gap:.5rem">'
+    +'<button class="btn btn-danger btn-sm" style="flex:1" onclick="deleteItem('+selectedIdx+')">Delete This Work</button>'
+    +'</div>';
+}
+
+// ─── Update Field ───
+function updateField(idx,field,value){
+  if(idx>=0&&idx<data.length)data[idx][field]=value;
+  saveData();
+  if(field==='layout')renderAll();
+  updateStatus();
+}
+
+// ─── Add / Delete Items ───
+function addNewItem(){
+  pendingImages=[];
+  $('new-title').value='';
+  $('new-desc').value='';
+  $('new-layout').value='';
+  $('new-image-list').innerHTML='';
+  $('new-item-modal').classList.add('show');
+}
+
+function closeModal(){
+  $('new-item-modal').classList.remove('show');
+}
+
+function confirmNewItem(){
+  var title=$('new-title').value.trim();
+  if(!title){toast('Title is required');return;}
+  var newItem={
+    id:'p'+(Date.now().toString(36)),
+    title:title,
+    desc:$('new-desc').value.trim(),
+    layout:$('new-layout').value,
+    media:pendingImages.slice()
+  };
+  data.push(newItem);
+  saveData();
+  renderAll();
+  updateStatus();
+  closeModal();
+  toast('Added: '+title);
+}
+
+function deleteItem(idx){
+  if(!confirm('Delete "'+data[idx].title+'"?'))return;
+  data.splice(idx,1);
+  selectedIdx=-1;
+  saveData();
+  renderAll();
+  updateStatus();
+  updateEditForm(null);
+  toast('Deleted');
+}
+
+// ─── Image Handling ───
+var currentImageTarget='new';
+
+function addImageToItem(idx){
+  currentImageTarget='item';
+  selectedIdx=idx;
+  $('image-file-input').click();
+}
+
+function handleImageFiles(e){
+  var files=e.target.files;
+  if(!files||!files.length)return;
+
+  for(var i=0;i<files.length;i++){
+    var f=files[i];
+    var reader=new FileReader();
+    (function(file,reader){
+      reader.onload=function(ev){
+        var base64=ev.target.result;
+        var ext=file.name.split('.').pop().toLowerCase();
+        var safeName='media/img_'+Date.now()+'_'+Math.random().toString(36).substr(2,4)+'.'+ext;
+
+        if(currentImageTarget==='new'){
+          pendingImages.push(base64); // store base64 temporarily
+          showNewImageThumb(base64,file.name);
+        }else if(selectedIdx>=0){
+          data[selectedIdx].media.push(base64);
+          saveData();
+          renderAll();
+          updateStatus();
+          toast('Image added to '+data[selectedIdx].title);
+        }
+      };
+      reader.readAsDataURL(file);
+    })(f,reader);
+  }
+  e.target.value='';
+}
+
+function showNewImageThumb(src,name){
+  var el=$('new-image-list');
+  var d=document.createElement('div');
+  d.className='thumb-wrap';
+  d.style.width='70px';d.style.height='48px';
+  d.innerHTML='<img src="'+src+'" title="'+name+'">';
+  el.appendChild(d);
+}
+
+function removeImage(itemIdx,imgIdx){
+  if(!confirm('Remove this image?'))return;
+  data[itemIdx].media.splice(imgIdx,1);
+  saveData();
+  renderAll();
+  updateStatus();
+}
+
+// ─── Import from media/ folder ───
+function importImages(){
+  var knownMedia=[
+    '2012-09-14-18839.jpg','avatar_candidate.jpg','extra_photo_2016.jpg',
+    'extra_portrait_2022.jpg','extra_uav_01.jpg','extra_uav_02.jpg',
+    'p1_museum_calling.jpg','p3_henan_01.jpg','p3_henan_04.jpg',
+    'p3_henan_05.jpg','p4_cinema4d.jpg','p6_benz.jpg',
+    'p6_guojiao1573.jpg','p6_huawei.jpg','p6_pukun.jpg',
+    'p6_qinling.jpg','p6_skill_life.jpg','p2_chimera.png',
+    'p3_henan_02.png','p3_henan_03.png','p4_redshift.png',
+    'p5_shot01.png','p5_shot02.png','p5_shot03.png',
+    'p5_shot04.png','p5_shot_all.png',
+    '\u5206\u955c_01.jpg','\u5206\u955c_02.jpg','\u5206\u955c_03.jpg',
+    '\u5206\u955c_04.jpg','\u5206\u955c_05.jpg','\u5206\u955c_06.jpg',
+    '\u5206\u955c_07.jpg','\u5206\u955c_08.jpg','\u5206\u955c_09.jpg',
+    '\u5927\u9003\u6e2fjpg_01.png','\u5927\u9003\u6e2fjpg_02.png','\u5927\u9003\u6e2fjpg_03.png'
+  ];
+  var html='<div style="max-height:300px;overflow-y:auto;padding:.5rem 0">';
+  for(var i=0;i<knownMedia.length;i++){
+    html+='<div style="display:flex;align-items:center;gap:.5rem;padding:.35rem .5rem;border-radius:6px;cursor:pointer;transition:background .15s" '
+      +'onmouseover="this.style.background=\'#f5f5f5\'" onmouseout="this.style.background=\'\'" '
+      +'onclick="copyImagePath(\'media/'+knownMedia[i]+'\')"'
+      +'>'
+      +'<span style="color:#c9a96e;font-weight:700;font-size:.78rem;width:20px">'+(i+1)+'</span>'
+      +'<span style="font-size:.84rem;color:#333">'+knownMedia[i]+'</span>'
+      +'</div>';
+  }
+  html+='</div><p style="font-size:.78rem;color:#888;margin-top:.5rem">Click a path to copy it to clipboard.</p>';
+
+  // Show in modal
+  var overlay=document.createElement('div');
+  overlay.className='modal-overlay show';
+  overlay.innerHTML='<div class="modal" style="width:420px"><h3>Available Images in media/</h3>'+html
+    +'<div class="modal-actions"><button class="btn btn-primary" onclick="this.closest(\'.modal-overlay\').remove()">Close</button></div></div>';
+  document.body.appendChild(overlay);
+
+  overlay.addEventListener('click',function(e){
+    if(e.target===overlay)overlay.remove();
+  });
+}
+
+function copyImagePath(path){
+  navigator.clipboard.writeText(path).then(function(){
+    toast('Copied: '+path);
+  }).catch(function(){
+    prompt('Copy this path:',path);
+  });
+}
+
+// ─── Reset ───
+function resetToDefault(){
+  if(!confirm('Reset all works to default? Your changes will be lost.'))return;
+  data=JSON.parse(JSON.stringify(DEFAULT_DATA));
+  selectedIdx=-1;
+  saveData();
+  renderAll();
+  updateStatus();
+  updateEditForm(null);
+  toast('Reset to default');
+}
+
+// ─── Export / Import JSON ───
+function exportData(){
+  var json=JSON.stringify(data,null,2);
+  var blob=new Blob([json],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;a.download='portfolio_data.json';a.click();
+  URL.revokeObjectURL(url);
+  toast('Data exported!');
+}
+
+function importData(event){
+  var f=event.target.files[0];
+  if(!f)return;
+  var r=new FileReader();
+  r.onload=function(e){
+    try{
+      data=JSON.parse(e.target.result);
+      saveData();
+      renderAll();
+      updateStatus();
+      toast('Data imported! '+data.length+' works loaded.');
+    }catch(err){
+      toast('Invalid JSON file');
+    }
+  };
+  r.readAsText(f);
+  event.target.value='';
+}
+
+// ─── Generate index.html ───
+function generateHTML(){
+  // Convert any base64 images to file references (for simplicity, we keep paths as-is)
+  // Build the output HTML
+  var itemsJS='[\n';
+  for(var i=0;i<data.length;i++){
+    var it=data[i];
+    var medias=it.media.map(function(m){
+      return '\''+m.replace(/'/g,"\\'")+'\'';
+    }).join(',');
+    itemsJS+="  {id:'"+it.id+"',title:'"+escJsStr(it.title)+"',desc:'"+escJsStr(it.desc)+"',layout:'"+it.layout+"',media:["
+      +medias+"]}";
+    if(i<data.length-1)itemsJS+=',';
+    itemsJS+='\n';
+  }
+  itemsJS+=']';
+
+  var output='<!DOCTYPE html>\n<html lang="zh-CN">\n<head>\n'
++'<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n'
++'<title>Zhou Qun | Motion Design Portfolio</title>\n'
++'<style>\n'+getCSS()+'\n</style>\n</head>\n<body>\n\n'
++'<!-- Navigation -->\n<nav class="nav" id="nav"><div class="nav-logo">Zhou Qun</div>\n'
++'<ul class="nav-links"><li><a href="#about">About</a></li><li><a href="#works">Works</a></li><li><a href="#contact">Contact</a></li></ul>\n</nav>\n\n'
++'<!-- Hero -->\n<section class="hero">\n<div class="hero-sub">Motion Designer &amp; Visual Director</div>\n'
++'<h1>Zhou Qun</h1>\n'
++'<p class="hero-desc">28 years crafting visual stories. From Phoenix TV broadcast design to immersive digital experiences.</p>\n'
++'<div class="hero-stats">\n'
++'<div class="stat"><div class="stat-num">28+</div><div class="stat-label">Years Exp</div></div>\n'
++'<div class="stat"><div class="stat-num">14</div><div class="stat-label">@ Phoenix TV</div></div>\n'
++'<div class="stat"><div class="stat-num">200+</div><div class="stat-label">Projects</div></div>\n</div>\n'
++'<div class="scroll-hint"><span>&darr;</span><span>Scroll</span></div>\n</section>\n\n'
++'<!-- About -->\n<section class="section" id="about">\n<div class="section-title reveal"><h2>About Me</h2></div>\n'
++'<div class="about-grid"><div class="about-photo-wrap reveal"><img src="media/avatar_candidate.jpg" alt="Zhou Qun" class="about-photo-img"></div>\n'
++'<div class="about-bio reveal"><h3>Senior Motion Designer / Visual Director</h3>\n'
++'<p>14 years at Phoenix TV (2006-2020) as core motion design lead. Now freelance, specializing in cinematic visual narratives, 3D visualization, and AI-augmented creative workflows.</p>\n'
++'<div class="tag-list"><span class="tag">Cinema 4D</span><span class="tag">Houdini</span><span class="tag">Blender</span><span class="tag">After Effects</span><span class="tag">Real-time Graphics</span><span class="tag">AI Visual</span><span class="tag">Director</span></div></div></div></section>\n\n'
++'<!-- Works -->\n<section class="section" id="works"><div class="section-title reveal"><h2>Selected Works</h2></div><div class="gallery-grid" id="gallery-grid"></div></section>\n\n'
++'<!-- Contact -->\n<section class="section" id="contact"><div class="section-title reveal"><h2>Contact</h2></div>\n'
++'<div style="text-align:center;max-width:500px;margin:0 auto"><p style="color:#666;margin-bottom:1.5rem">Available for freelance projects and collaborations.</p>\n'
++'<p style="font-size:1.1rem;font-weight:600;color:#1a1a1a">zhouqun197746@gmail.com</p>\n'
++'<div class="tag-list" style="justify-content:center;margin-top:2rem"><span class="tag">Beijing, China</span><span class="tag">Open to Remote</span></div></div></section>\n\n'
++'<!-- Footer -->\n<footer class="footer"><p>&copy; 2026 Zhou Qun. All rights reserved.</p></footer>\n\n'
++'<!-- Lightbox -->\n<div class="lightbox" id="lightbox"><div class="lb-header">\n'
++'<span class="lb-title" id="lb-title"></span><span class="lb-count" id="lb-count"></span>\n'
++'<button class="lb-close" onclick="closeLightbox()">&times;</button></div>\n'
++'<div class="lb-viewport" id="lb-viewport"></div>\n'
++'<div class="lb-footer"><button class="lb-nav-btn lb-prev" onclick="event.stopPropagation();lbPrev()">&#10094;</button>\n'
++'<div class="lb-dots" id="lb-dots"></div><button class="lb-nav-btn lb-next" onclick="event.stopPropagation();lbNext()">&#10095;</button></div></div>\n\n'
++'<!-- JS -->\n<script>\nvar ITEMS='+itemsJS+';\n'+getJS()+'\n<\/script>\n</body>\n</html>';
+
+  // Download the file
+  var blob=new Blob([output],{type:'text/html'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;a.download='index.html';a.click();
+  URL.revokeObjectURL(url);
+  toast('index.html generated! Replace your existing one.');
+}
+
+function getCSS(){
+  return document.querySelector('style').textContent.replace(/\/\*.*?\*\//g,'').trim();
+}
+
+function getJS(){
+  return '(function(){var grid=document.getElementById("gallery-grid");for(var i=0;i<ITEMS.length;i++){var it=ITEMS[i];var d=document.createElement("div");d.className="gallery-item"+(it.layout?" "+it.layout:"");var cnt=it.media?it.media.length:0;if(cnt>0){d.innerHTML="<img src=\\""+it.media[0]+"\\" class=\\"gallery-cover\\" alt=\\""+it.title+"\\" loading=\\"lazy\\>"+"<div class=\\"gallery-media-count\\>"+cnt+" photos</div>"+"<div class=\\"gallery-overlay\\"><span class=\\"overlay-title\\>"+it.title+"</span><span class=\\"overlay-desc\\>"+it.desc+"</span><span style=\\"font-size:.72rem;color:#c9a96e;margin-top:.3rem\\">Click to view "+cnt+" images</span></div>";}d.onclick=(function(idx){return function(){openLB(idx);};})(i);grid.appendChild(d);}})();var curIdx=-1,curSlide=0;function openLB(idx){curIdx=idx;curSlide=0;var it=ITEMS[idx];document.getElementById("lb-title").textContent=it.title+" - "+it.desc;renderSlides(it);document.getElementById("lightbox").classList.add("show");document.body.style.overflow="hidden";}function closeLightbox(){document.getElementById("lightbox").classList.remove("show");document.body.style.overflow="";curIdx=-1;}function renderSlides(it){var vp=document.getElementById("lb-viewport");vp.innerHTML="";if(!it.media||!it.media.length){vp.innerHTML="<p style=color:#666>No media</p>";return;}for(var i=0;i<it.media.length;i++){var s=document.createElement("div");s.className="lb-slide"+(i===0?" active":"");s.innerHTML="<img src=\\""+it.media[i]+"\\" loading=\\"lazy\\>";vp.appendChild(s);}var dc=document.getElementById("lb-dots");dc.innerHTML="";for(var j=0;j<it.media.length;j++){var b=document.createElement("button");b.className="lb-dot"+(j===0?" active":"");b.onclick=(function(n){return function(){goSlide(n);};})(j);dc.appendChild(b);}updateCount()}function goSlide(n){var ss=document.querySelectorAll(".lb-slide");var ds=document.querySelectorAll(".lb-dot");for(var k=0;k<ss.length;k++){ss[k].className="lb-slide"+(k===n?" active":"");ds[k].className="lb-dot"+(k===n?" active":"");}curSlide=n;updateCount()}function updateCount(){if(curIdx>=0&&ITEMS[curIdx])document.getElementById("lb-count").textContent=(curSlide+1)+" / "+ITEMS[curIdx].media.length}function lbNext(){if(curIdx<0)return;var c=ITEMS[curIdx].media.length;if(c<=1)return;goSlide((curSlide+1)%c)}function lbPrev(){if(curIdx<0)return;var c=ITEMS[curIdx].media.length;if(c<=1)return;goSlide((curSlide-1+c)%c)}document.getElementById("lightbox").addEventListener("click",function(e){if(e.target===this||e.target.id==="lb-viewport")closeLightbox()});(function(){var els=document.querySelectorAll(".reveal");function check(){for(var i=0;i<els.length;i++){var r=els[i].getBoundingClientRect();if(r.top<window.innerHeight*0.82)els[i].classList.add("visible")}}window.addEventListener("scroll",check,{passive:true});check()})();window.addEventListener("scroll",function(){document.getElementById("nav").classList.toggle("scrolled",window.scrollY>50)},{passive:true});document.addEventListener("keydown",function(e){if(e.key==="Escape")closeLightbox()});';
+}
+
+// ─── Preview ───
+function previewSite(){
+  // Open index.html in new tab
+  var win=window.open('index.html','preview');
+  toast('Opening preview...');
+}
+
+// ─── Save / Load ───
+function saveData(){
+  try{localStorage.setItem('portfolio_editor_data',JSON.stringify(data));}catch(e){}
+}
+
+function updateStatus(){
+  $('item-count').textContent=data.length;
+  var total=0;
+  data.forEach(function(d){total+=d.media.length;});
+  $('image-count').textContent=total;
+}
+
+// ─── Drag & Drop ───
+function setupDragDrop(){
+  var items=document.querySelectorAll('.card-item');
+  var dragSrc=null;
+
+  items.forEach(function(item){
+    item.addEventListener('dragstart',function(e){
+      dragSrc=this;
+      this.classList.add('dragging');
+      e.dataTransfer.effectAllowed='move';
+      e.dataTransfer.setData('text/plain',this.dataset.idx);
+    });
+    item.addEventListener('dragend',function(){
+      this.classList.remove('dragging');
+      items.forEach(function(i){i.classList.remove('drag-over');});
+    });
+    item.addEventListener('dragover',function(e){
+      e.preventDefault();e.dataTransfer.dropEffect='move';
+    });
+    item.addEventListener('dragenter',function(e){
+      e.preventDefault();if(this!==dragSrc)this.classList.add('drag-over');
+    });
+    item.addEventListener('dragleave',function(){
+      this.classList.remove('drag-over');
+    });
+    item.addEventListener('drop',function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      if(dragSrc&&dragSrc!==this){
+        var fromIdx=parseInt(dragSrc.dataset.idx);
+        var toIdx=parseInt(this.dataset.idx);
+        var moved=data.splice(fromIdx,1)[0];
+        data.splice(toIdx,0,moved);
+        saveData();
+        renderAll();
+        updateStatus();
+        toast('Reordered');
+      }
+      this.classList.remove('drag-over');
+    });
+  });
+}
+
+// ─── Utils ───
+function escHtml(s){if(!s)return '';return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function escAttr(s){if(!s)return '';return s.replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function escJsStr(s){if(!s)return '';return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,'\\n').replace(/\r/g,'\\r');}
+
+function toast(msg){
+  var t=document.createElement('div');
+  t.className='toast';t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(function(){t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(function(){t.remove()},300)},2200);
+}
+</script>
+</body>
+</html>
